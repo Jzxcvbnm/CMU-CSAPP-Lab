@@ -1,0 +1,97 @@
+# depslib dependency file v1.0
+1029467122 source:d:\myteaching\2022f-slp\week2\slp-week02-lab-dlab\dlab\bits.c
+	"btest.h"
+	<limits.h>
+
+1029467122 d:\myteaching\2022f-slp\week2\slp-week02-lab-dlab\dlab\btest.h
+
+1029467424 source:d:\myteaching\2022f-slp\week2\slp-week02-lab-dlab\dlab\btest.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<limits.h>
+	"btest.h"
+	"getopt.h"
+
+1029467122 d:\myteaching\2022f-slp\week2\slp-week02-lab-dlab\dlab\getopt.h
+
+1029467122 source:d:\myteaching\2022f-slp\week2\slp-week02-lab-dlab\dlab\decl.c
+	<stdio.h>
+	<stdlib.h>
+	<limits.h>
+	"btest.h"
+	"bits.h"
+
+1029467122 d:\myteaching\2022f-slp\week2\slp-week02-lab-dlab\dlab\bits.h
+
+1029467122 source:d:\myteaching\2022f-slp\week2\slp-week02-lab-dlab\dlab\tests.c
+	<limits.h>
+
+1662539779 source:d:\myteaching\2022f-slp\week2\slp-week02-lab-dlab\dlab\getopt.c
+	"config.h"
+	<stdio.h>
+	"tailor.h"
+	<stdlib.h>
+	"getopt.h"
+	<string.h>
+
+1029467122 d:\myteaching\2022f-slp\week2\slp-week02-lab-dlab\dlab\tailor.h
+	<io.h>
+	<io.h>
+	<dos.h>
+	<io.h>
+	<malloc.h>
+	<alloc.h>
+	<malloc.h>
+	<file.h>
+	<unixio.h>
+	<fcntl.h>
+
+1029467424 source:e:\系统级编程\slp-week02-lab-dlab\slp-week02-lab-dlab\dlab\btest.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<limits.h>
+	"btest.h"
+	"getopt.h"
+
+1029467122 e:\系统级编程\slp-week02-lab-dlab\slp-week02-lab-dlab\dlab\btest.h
+
+1029467122 e:\系统级编程\slp-week02-lab-dlab\slp-week02-lab-dlab\dlab\getopt.h
+
+1029467122 source:e:\系统级编程\slp-week02-lab-dlab\slp-week02-lab-dlab\dlab\decl.c
+	<stdio.h>
+	<stdlib.h>
+	<limits.h>
+	"btest.h"
+	"bits.h"
+
+1029467122 e:\系统级编程\slp-week02-lab-dlab\slp-week02-lab-dlab\dlab\bits.h
+
+1662539779 source:e:\系统级编程\slp-week02-lab-dlab\slp-week02-lab-dlab\dlab\getopt.c
+	"config.h"
+	<stdio.h>
+	"tailor.h"
+	<stdlib.h>
+	"getopt.h"
+	<string.h>
+
+1029467122 e:\系统级编程\slp-week02-lab-dlab\slp-week02-lab-dlab\dlab\tailor.h
+	<io.h>
+	<io.h>
+	<dos.h>
+	<io.h>
+	<malloc.h>
+	<alloc.h>
+	<malloc.h>
+	<file.h>
+	<unixio.h>
+	<fcntl.h>
+
+1029467122 source:e:\系统级编程\slp-week02-lab-dlab\slp-week02-lab-dlab\dlab\tests.c
+	<limits.h>
+
+1695130459 source:e:\系统级编程\slp-week02-lab-dlab\slp-week02-lab-dlab\dlab\bits.c
+	"btest.h"
+	<limits.h>
+

@@ -1,0 +1,11 @@
+# depslib dependency file v1.0
+1665156685 source:d:\myteaching\2022f-slp\week05\decode\main.c
+	<stdio.h>
+	<stdlib.h>
+	<stdint.h>
+
+1665156686 source:e:\系统级编程\05-decoding lab\decode\main.c
+	<stdio.h>
+	<stdlib.h>
+	<stdint.h>
+

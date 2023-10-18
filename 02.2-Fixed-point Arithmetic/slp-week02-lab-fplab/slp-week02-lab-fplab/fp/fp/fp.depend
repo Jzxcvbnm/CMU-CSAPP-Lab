@@ -1,0 +1,49 @@
+# depslib dependency file v1.0
+1662282628 source:d:\myteaching\2022f-slp\week2\slp-week02-lab-fplab\fp\fixedpoint.cpp
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<ctype.h>
+	<assert.h>
+	"fixedpoint.h"
+
+1662282587 d:\myteaching\2022f-slp\week2\slp-week02-lab-fplab\fp\fixedpoint.h
+	<stdint.h>
+
+1662280143 source:d:\myteaching\2022f-slp\week2\slp-week02-lab-fplab\fp\fixedpoint_test.cpp
+	<iostream>
+	<gtest/gtest.h>
+	"fixedpoint.h"
+
+1662281515 source:d:\myteaching\2022f-slp\week2\slp-week02-lab-fplab\fp\fixedpoint.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<ctype.h>
+	<assert.h>
+	"fixedpoint.h"
+
+1695627462 source:e:\系统级编程\slp-week02-lab-fplab\slp-week02-lab-fplab\fp\fp\fixedpoint.cpp
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<ctype.h>
+	<assert.h>
+	"fixedpoint.h"
+
+1695572592 e:\系统级编程\slp-week02-lab-fplab\slp-week02-lab-fplab\fp\fp\fixedpoint.h
+	<stdint.h>
+
+1662280143 source:e:\系统级编程\slp-week02-lab-fplab\slp-week02-lab-fplab\fp\fp\fixedpoint_test.cpp
+	<iostream>
+	<gtest/gtest.h>
+	"fixedpoint.h"
+
+1662280143 source:e:\系统级编程\02.2-fixed-point arithmetic\slp-week02-lab-fplab\slp-week02-lab-fplab\fp\fp\fixedpoint_test.cpp
+	<iostream>
+	<gtest/gtest.h>
+	"fixedpoint.h"
+
+1695572592 e:\系统级编程\02.2-fixed-point arithmetic\slp-week02-lab-fplab\slp-week02-lab-fplab\fp\fp\fixedpoint.h
+	<stdint.h>
+
