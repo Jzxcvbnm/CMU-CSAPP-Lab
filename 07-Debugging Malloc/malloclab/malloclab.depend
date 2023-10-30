@@ -1,0 +1,28 @@
+# depslib dependency file v1.0
+1028826732 source:d:\myteaching\2022f-slp\week07\malloclab\debugmalloc.c
+	<stdlib.h>
+	<string.h>
+	"debugmalloc.h"
+	"dmhelper.h"
+	<stdio.h>
+
+1028826860 d:\myteaching\2022f-slp\week07\malloclab\debugmalloc.h
+	<stdlib.h>
+
+1028722654 d:\myteaching\2022f-slp\week07\malloclab\dmhelper.h
+
+1028722658 source:d:\myteaching\2022f-slp\week07\malloclab\dmhelper.c
+	"dmhelper.h"
+	<stdio.h>
+	<stdlib.h>
+
+1028886494 source:d:\myteaching\2022f-slp\week07\malloclab\driver.c
+	<stdlib.h>
+	<stdio.h>
+	<string.h>
+	<windows.h>
+	"getopt.h"
+	"debugmalloc.h"
+
+1027396680 d:\myteaching\2022f-slp\week07\malloclab\getopt.h
+
