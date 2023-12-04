@@ -1,0 +1,604 @@
+<html>
+<head>
+<link rel=stylesheet href="/css/cteform.css" type="text/css">
+<title>Exercise 6: Concurrency Lab &amp;copy; 2002-2005 iCarnegie, Inc. - UI Version 3.15</title>
+<META HTTP-EQUIV="Pragma" CONTENT="no-cache"><META HTTP-EQUIV="Expires" CONTENT="-1"><META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=utf-8"><script language="JavaScript" src="/js/cteform.js"></script>
+<script language="JavaScript" src="/js/ctecoursespt.js"></script>
+<script language="JavaScript1.2">
+CTEUtils_ImgDirURL = "/img";
+CTEUtils_CssDirURL = "/css";
+CTEUtils_JsDirURL = "/js";
+</script>
+<script language="JavaScript1.2" src="/js/ctesortable.js"></script><script language="JavaScript">var filelisting_3724343_tbl_info = new Array();
+filelisting_3724343_tbl_info[1] = new Array();
+filelisting_3724343_tbl_info[1]["name"] = "Size";
+filelisting_3724343_tbl_info[1]["type"] = "number";
+filelisting_3724343_tbl_info[2] = new Array();
+filelisting_3724343_tbl_info[2]["name"] = "Status";
+filelisting_3724343_tbl_info[2]["type"] = "string";
+filelisting_3724343_tbl_info[3] = new Array();
+filelisting_3724343_tbl_info[3]["name"] = "File Type";
+filelisting_3724343_tbl_info[3]["type"] = "string";
+filelisting_3724343_tbl_info[4] = new Array();
+filelisting_3724343_tbl_info[4]["name"] = "Download";
+filelisting_3724343_tbl_info[4]["type"] = "string";
+var filelisting_3724343_tbl = new Object;
+filelisting_3724343_tbl.name = 'filelisting_3724343_tbl';
+filelisting_3724343_tbl.info = filelisting_3724343_tbl_info;
+var Assm = new Object;
+Assm.name = 'Assm';
+Assm.postRenderings = new Array();
+</script></head><body onLoad="">
+<p><a name="top_3724343"></a></p>
+<td width=5>&nbsp;</td>
+<table><tr>
+<td width=5><br></td>  <td valign=top class=td0_x align=left ><h2>Concurrency Lab:  Understanding concurrent programs</h2>
+
+<h3>Lab Requirements</h3>
+
+<p>This lab assumes that you are using Visual C++ under a 32-bit version of Windows, 
+  using Intel Pentium or Pentium-equivalent machines. The exact compiler and platform 
+  are mostly unimportant, as the lab is reasonably portable, but the lab specifically 
+  uses Pentium features. A list of compatible processors follows; if you don't 
+  have access to such a machine, please talk to your instructor.</p>
+
+<ul><li>Intel Pentium</li>
+    <li>Intel Pentium Pro</li>
+    <li>Intel Celeron</li>
+    <li>Intel Pentium II</li>
+    <li>Intel Pentium III</li>
+    <li>Intel Pentium 4</li>
+    <li>Intel Xeon</li>
+    <li>AMD K6-2</li>
+    <li>AMD K6-III</li>
+    <li>AMD Athlon</li>
+</ul>
+
+<p>The specific criterion for compatibility is an IA-32 processor with the RDTSC 
+  instruction; note that, in particular, the AMD K6 lacks this instruction, as 
+  do all processors prior to the Pentium. If you aren't certain whether your processor 
+  supports this instruction, the lab does include a function to check this, and 
+  will do so automatically each time you run the <code><cite>Timestamp.exe</cite></code> 
+  program. If your processor does not support the RDTSC instruction, you will 
+  be notified with the message "processor does not support timestamp register". 
+</p>
+
+<h2>Introduction</h2>
+
+<p>You may find <a href="Exercise6/handout/notes.html">these notes</a> useful.</p>
+
+<p>The hardware used in most computers today times internal functions in terms 
+  of a hardware clock, not to be confused with the system clock. The system clock
+  simply keeps track of the current time, while, without going 
+  too in-depth, a hardware clock sends a regular electrical pulse along a wire, 
+  allowing different pieces of hardware to coordinate their activities. In particular, 
+  processors receive clock signals at a specific frequency and use these signal 
+  to coordinate the execution of instructions. Higher frequencies translate to 
+  faster execution. All processors have a maximum frequency at which they can 
+  operate; exceeding this frequency can cause the processor to not work properly, 
+  and sometimes can permanently damage the processor. Therefore, processors are rated 
+  by their manufacturers to run at frequencies up to a certain limit; this limit 
+  is the number often seen next to a processor's name. Thus, a 1.6GHz Pentium 
+  4 processor is rated to safely receive 1.6 billion clock cycles per second. 
+  Configuring a computer to exceed this amount (called overclocking) is 
+  sometimes possible, but always dangerous. </p>
+
+<p>The number of clock cycles required to run a given instruction varies from 
+  processor to processor; some processors take multiple cycles to execute instructions 
+  that another processor might execute in even less than a full clock cycle. For 
+  these and other reasons, clock speed is far from giving a complete idea of the 
+  speed with which a processor can execute a program, even a CPU-intensive program.</p>
+
+<p>Beginning with the Pentium, Intel processors feature a special
+internal 64-bit register called the <b>timestamp counter</b>.  On
+power-on, the value of this counter is zero.  Every clock cycle, the
+processor increments the value in this counter by one.  Since it's a
+64-bit register, 2<sup>64</sup> cycles can pass before the register
+loops around to zero.  2<sup>64</sup> is 18,446,744,073,709,551,616.
+Dividing this number by your current clock frequency yields how many
+seconds it will take your computer to wrap around.  For example, at
+exactly 2.0GHz, the processor will have to be on for 9223372037
+seconds, or over 292 years.</p>
+
+<p>When a preemptively multitasking operating system 
+  like Windows schedules a process, it arranges to have a signal sent to the kernel 
+  after a certain amount of time. On this signal, which is known as the <b>timer
+  interrupt</b>, the kernel decides whether  
+  to switch out the current thread, or leave the current thread running. This decision is
+  made by the scheduling policy of the operating system, and can take into account various
+  factors such as thread priority, the time a thread has spent processing, and the
+  time other threads have spent waiting to process. The length of time between timer interrupts is
+  known as the <b>timer interval</b>.  The timer interval is an important factor in the effectiveness of
+  a preemptive multitasking operating system, since a timer interval that is too short will
+  create a large amount of overhead and reduce overall system performance.  On the other hand,
+  a timer interval that is too long will allow programs to run much longer without 
+  interruption, thus reducing the illusion of many programs running simultaneously.
+</p>
+
+<p>Through the power of the timestamp counter, 
+  it's possible to detect when the program has been preempted. As the first part 
+  of this exercise, you will both determine the timer interval used by your operating 
+  system and analyze data given to you to determine properties of your operating 
+  system.</p>
+
+<p>As the second part of this exercise, you will use threaded programming to implement 
+  a simple client that efficiently retrieves information from multiple simulated 
+  databases over a simulated network.</p>
+
+<p>By the end of this lab, you should have a working understanding of
+how an operating system implements the abstraction of concurrency on
+a single CPU.</p>
+
+<p>Let's get started.</p>
+
+<h2>Part I:  The kernel timer interval</h2>
+
+<h3>Getting Started</h3>
+
+<p><a href="Exercise6/handout/timestamp_v1.zip">Here</a> is one of the programs you will be using
+for this section.  
+The archive should contain the following files;
+you will want to create a new directory to unzip them in.</p>
+
+<dl>
+  <dt>Timestamp.dsw</dt>
+    <dd>The Visual C++ Workspace for the project</dd>
+  <dt>Timestamp.dsp</dt>
+    <dd>The Visual C++ Project for this project</dd>
+  <dt>Timestamp.opt</dt>
+    <dd></dd>
+  <dt>Timestamp.plg</dt>
+    <dd></dd>
+  <dt>Timestamp.ncb</dt>
+    <dd></dd>
+  <dt>Timestamp.exe</dt>
+    <dd>A precompiled version of the code in this directory</dd>
+  <dt>tsc.h</dt>
+    
+  <dd>An interface to code, which reads the timestamp counter</dd>
+  <dt>tsc.c</dt>
+    <dd>Assembly-language routines to read the timestamp counter</dd>
+  <dt>test.cpp</dt>
+    <dd>Contains function <code>main</code> and the routines for recording and reporting the timestamp information</dd>
+</dl>
+
+<p>Definitely take a look at <code><cite>test.cpp</cite></code>, specifically
+  procedure <code>spin</code>.  Procedure <code>spin</code> contains a
+  for-loop that, upon each iteration, reads and stores the value of the timestamp register.
+  Actually, there are a few for-loops in function <code>spin</code>; the 
+  for-loop that reads the timestamp register is labeled "Reading Timestamp".
+  Run the precompiled executable and examine this source code to gain a good
+  understanding of how this program operates.  As you examine the source code,
+  particularly function <code>spin</code> and the labeled "Reading Timestamp"
+  for-loop, ask yourself the following questions:
+<ul>
+<li>What is being stored in array <code>table</code>?</li>
+<li>What size is array <code>table</code> initialized to?</li>
+  <li>At its peak, how many different instances of array <code>table</code> will 
+    be there when 4 threads are running?</li>
+</ul>
+  Do not spend a long time studying this source code. Just read through it to 
+get an idea of how the program works. Note that the file <code><cite>Timestamp.exe</cite></code> 
+is precompiled directly from the source in this archive. If you decide to recompile 
+for some reason, make sure you're compiling for &quot;Release&quot; version (as 
+opposed to the &quot;Debug&quot; version); the debugger adds strange latencies 
+and inefficiencies to the code that can be difficult to analyze. 
+<p></p>
+
+
+<h3>The <code>Timestamp</code> program - How it works</h3>
+
+<p>You can run the program from inside Visual C++, but you won't be able to specify 
+  options or clearly read the output. Instead, you should start a command prompt, 
+  change to the project directory, and run the program (Timestamp.exe) from there. 
+  If you type "Timestamp -h", that will tell you about the options available to 
+  you. 
+<p> This program will create a user specified number of threads that each executes 
+  a simple for-loop. For each execution of this for-loop, the value of the timestamp 
+  register is read and stored into an array. Each thread stores these values into 
+  a separate array. By examining the timestamp values in one of these arrays, 
+  the program can determine when a specific thread was running (and when it wasn't 
+  running). If a thread was running, that means it was executing the for-loop 
+  and storing consecutive values into its array that differ by very little. These 
+  values would differ only slightly simply because it does not take the processor 
+  very long to complete a loop iteration. For our purposes, a difference of 1 
+  to 200 or so cycles is considered normal for a loop iteration. A difference 
+  between consecutive values in one of the thread arrays that is very large, say 
+  20,000,000 cycles, means that the thread was not running during that timespan. 
+  The values in all of the arrays (from all the threads) can be processed into 
+  a timeline of when and for how long each thread in the program ran. We will 
+  use the timestamp program to help generate this timeline. 
+<p>The basic usage of this program is straightforward. The program fills a table 
+  (an array named <code>table</code>) of a given size (this size can be set with 
+  the '-i' option, as in, "Timestamp -i 5000") with readings from the timestamp 
+  counter, one per iteration of the for-loop in procedure <code>spin</code>. After 
+  the program finishes the for-loop, a report is generated of when it thinks the 
+  thread was switched out. It does this by looking at the differences between 
+  consecutive timestamps; anything that exceeds a given threshold is considered 
+  a switch. By default, this threshold is the minimum -- that is, it is set to 
+  the minimum number of cycles elapsed during one iteration of the loop in function 
+  <code>spin</code>. Any difference between consecutive timestamps that is longer 
+  than the minimum threshold the program views as an interrupt. Sometimes, for 
+  various reasons, an iteration of the loop simply takes longer, and unfortunately 
+  the timestamp program will incorrectly view these instances as interrupts. Using 
+  the <code>-t</code> command-line option we can override the default minimum 
+  threshold and manually set the threshold that the timestamp program will use. 
+  Setting the threshold to a much higher value than the minimum will allow the 
+  timestamp program to better depict real interrupts by ignoring the instances 
+  where it just took the loop longer to execute. For example, on my 700Mhz machine 
+  running Windows NT 4.0, a threshold value of 1000 cycles (as opposed to my minimum 
+  calculated threshold of 42 cycles) will allow the timestamp program to only 
+  report actual interrupts. A final option of the timestamp program that we will 
+  use in this exercise is the ability to have the timestamp program create more 
+  than one thread. Using the <code>-p</code> command-line option, we can specify 
+  how many threads we would like to have continually reading the timestamp register. 
+  The default for this option is 1, but that is not very interesting, so in practice, 
+  we will set this option to usually around 4 or 5. </p>
+
+<p>The results of this program are clearest when being executed on a
+computer with very little else running.  Remember, the program picks
+up on any context switch, not just those caused by timer interrupts.
+Disk activity causes interrupts (to signal the end of specific
+transfers) which can make the data much more confusing.</p>
+
+
+<h3>The <code>graph</code> program - How it works</h3>
+
+<p><a href="Exercise6/handout/graph.zip">Here</a> is the second program that you will use for this 
+  section. This program will graphically depict the results of the Timestamp.exe 
+  program. This file should contain the following files; you will want to create 
+  a new directory to unzip them in.</p>
+
+<dl>
+  <dt>graph.exe</dt>
+    
+  <dd>The compiled version of the following source code files</dd>
+  <dt>graph.vbp</dt>
+    <dd>A Visual Basic 6.0 project file</dd>
+  <dt>frmGraph.frm</dt>
+    <dd>A Visual Basic 6.0 form file</dd>
+  <dt>clsData.cls</dt>
+    <dd>A Visual Basic 6.0 class module</dd>
+  <dt>clsThread.cls</dt>
+    <dd>A Visual Basic 6.0 class module</dd>
+</dl>
+
+<p>Feel free to browse the source code if you wish.  To use the graph program,
+you will need the data generated from the timestamp program to be saved
+in a file with a <code>.out</code> extension. Use redirection to do this. 
+For example, the following line will redirect the output of the
+timestamp program to a file named <code>output.out</code>: 
+
+<p> <code>Timestamp.exe -t 1000 -i 1000000 -p 4 > output.out</code> 
+<p>After saving the output of the timestamp program to a file, start
+the graph program by double-clicking on the file from Explorer, or using the 
+Start-Run menu command.  When you initially start the graph program you will 
+see the following:
+
+<p><img src="Exercise6/handout/graph1.jpg">
+
+<p>Clicking on the <cite>Select Data File</cite> button will bring up 
+a dialog where you can browse to a <code>.out</code> timestamp program
+generated data file. After selecting a file, you will see (depending on
+the data in the actual file) something like this:
+
+<p><img src="Exercise6/handout/graph2.jpg">
+
+<p>In the above screen shot of the graph program, we can easily see that
+data from four threads is depicted, since each thread is color coded, and
+we see four colors (green, blue, red, and cyan).  Also, in the default
+viewing mode of the graph program each thread is depicted on a separate horizontal
+line, with thread numbers on the left and right of the graph. The graph, which simply 
+shows when each thread was running, reads from left
+to right, so the green thread (thread 0) was the first thread to begin execution. The
+green thread encountered two interrupts, denoted by the red tick marks.
+Note that during the first interrupt the green thread was no longer running,
+but that since the length of this interrupt was so short (and the resolution
+of the monitor is limited), we see no visible gap in the display of the green thread execution.  For this reason, the 
+red tick marks are included, otherwise it would be difficult to see these
+very short times when the operating system code (and not the thread) is being run during the interrupt.  
+During the second interrupt that occurs while the green thread is running,
+the operating system switches execution
+to the blue thread.  The green thread does not run again until after the
+other three threads each run.  To get a more linear view of the four
+threads, check the <cite>Single Line</cite> check box at the bottom
+of the interface.  Something similar to this will result:
+
+<p><img src="Exercise6/handout/graph3.jpg">
+
+<h3>Finding the timer interval</h3>
+
+<p>Looking at the linear view of the threads in the screen shot above, we can 
+see that most of the interrupts (the red ticks) are occurring at a regular
+interval.  It is probably the case that these are timer interrupts.
+We can get a good guess at the timer interval by finding the difference
+between when these interrupts occur.  To do this, hover your mouse
+pointer above an interrupt.  A message will appear that gives information
+about the interrupt, namely, when the interrupt occurred and how long 
+it lasted.  By subtracting the starting points of two suspected timer
+interrupts, we can get a multiple of the timer interval.  If these are
+two adjacent interrupts, then our result is the timer interval, and not
+a multiple of the timer interval.  Performing this on the graph listed above,
+I got an estimate of 6,988,500 for my timer interval.
+
+We can test this hypothesis by overlaying our guess of the timer interval
+onto the graph.  To do this, click the <cite>Overlay</cite> button.  This
+option will first ask us to select an interrupt that we believe is a timer
+interrupt.  Using the mouse, we point to any one of the several interrupts
+we believe is a timer interrupt.  After clicking on an interrupt, we are
+then asked to input our calculated estimate of the timer interval.  After
+typing in 6,988,500 the program then displays the following:
+
+<p><img src="Exercise6/handout/graph4.jpg">
+
+<p>It is important to understand what the program did for us. The program drew 
+  the dashed gray lines at an interval of every 6,988,500 cycles (our guess of 
+  the interval), from the starting point of the interrupt (the red tick) that 
+  we picked. If we had picked an interrupt that was not a timer interrupt, the 
+  overlaid dashed gray lines would not match up to very many (if any) other interrupts.</p>  
+
+If the timer interval is correct, and a timer interrupt is indeed picked as the 
+starting point for the overlay, the overlaid dashed gray lines will match timer 
+interrupts in <strong>all</strong> threads, not just one or two. If your overlaid 
+estimate seems to match interrupts for only one thread and not the others, then 
+your interrupts are not timer interrupts. In this case, you may have to increase 
+the threshold (with the <code>-t</code> option) from the timestamp program, since 
+you may be viewing periodic events (but not interrupts) in the course of the execution 
+of a specific thread. Remember, timer interrupts are hardware generated and are 
+periodic across all threads. This means that a timer interrupt will always occur 
+every so many cycles (or seconds), and also, this period never shifts. In the 
+screen shot listed above, we can easily see that our guess of the timer interval 
+and our choice of an interrupt were correct, since our overlaid guess matches 
+the periodic interrupts in all threads. Also, timestamp data (not shown here) 
+with much smaller thresholds did not show any shorter periodic interrupts. 
+<p>Now we can also see some other interesting facts. For instance, notice that 
+  the right most full timer interval contains none of our four threads. What happened 
+  here? Put simply enough, the operating system scheduled another process. After 
+  that process ran one full time interval, the OS switched back to the one of 
+  our four threads (thread 3, the cyan one), which needed only a very short time 
+  to complete execution. Something else that is interesting is the presence of 
+  non-timer interrupts. We see a few here. What are these? Most likely the first 
+  (which is the 5th re-tick from left) is an I/O interrupt, but the final two 
+  (the last two red-ticks on the right) actually are the green and blue threads 
+  completing execution before the end of a timer interval. During these interrupts, 
+  the operating system has to decide what to schedule next. In the case of the 
+  green thread finishing, the blue thread (thread 1) was scheduled next. 
+<p>You will also need to know the approximate clock speed of your processor, since, 
+  to determine the timer interval in seconds, the length of the timer interval 
+  in cycles must be divided by the number of clock cycles the processor receives 
+  in one second. Make sure to remember the relationship between cycles and Hertz 
+  (Hz). Hertz is a measurement of cycles per second. So a 200MHz processor, by 
+  definition of Hertz (Hz), receives 200000000 (200 million) clock cycles in one 
+  second. Likewise, a 2GHz processor can safely receive 2000000000 (2 billion) 
+  clock cycles in one second. To get an estimate of the clock rate of your machine, 
+  execute the following: <tt>Timestamp -s</tt>. The program will determine how 
+  long it takes (in milliseconds and cycles) to execute a series of instructions. 
+  From this data it will output an estimate of the clock rate of your processor. 
+<p>Also, typical timer intervals range
+  between 1 and 10 milliseconds.  So if you know your processor's clock rate, you can
+  get an idea of what range to look in for your timer interval.  For example, my processor is
+  rated to receive 700 million cycles per second.  So my timer interval should be between
+  700,000 and 7,000,000 cycles.  This may seem like a large range of values, but in reality, 7,000,000
+  cycles go by very quickly (actually in 10ms on my 700Mhz machine).
+</p>
+
+
+<h3>Your Task</h3>
+
+<p>For this part of the exercise, run the timestamp program with 4 threads 
+(the <code>-p 4</code> command-line option) executing.  
+Save the output to a file named <code>output.out</code>.  Then,
+open this data file with the graph program and answer the following
+questions.    You may have to run the timestamp program many times,
+with different options for the threshold and number of iterations to get
+data that clearly depicts the timer interval.  If your machine
+is faster than 700Mhz, you may need to increase the number of iterations
+and/or decrease the threshold.  For the record, the
+command line used on my 700Mhz machine to generate the data that the graph
+program screen shots display was as follows:</p>
+
+<p> <code>Timestamp -t 1000 -i 1000000 -p 4 > output.out</code> </p>
+
+<p>
+Hand in your answers to these questions in a file named <code><cite>answers.txt</cite></code>.  <strong>Also, make
+sure you submit the <code><cite>output.out</cite></code> file that you based the
+answers to the questions on.
+</strong>
+
+<ol>
+  <li>Using the timestamp program, what is the estimated clock rate of your processor 
+    in cycles per second? (2 points)</li>
+  <li>What is the approximate timer interval of your operating system? Report 
+    your answer in both cycles and in seconds. (14 points)</li>
+  <li>What are the minimum and maximum lengths of the timer interrupts that you 
+    observed? Do not count timer interrupts that switched to a different thread 
+    or different process. (2 points)</li>
+  <li>How many total interrupts did you record? (2 points)</li>
+  <li>How many of these were timer interrupts? (2 points)</li>
+  <li>How many timer interrupts resulted in context switches to another thread 
+    that belongs to the timestamp program? (3 points)</li>
+  <li>Did a timer interrupt resulted in a context switch to a different process? 
+    If so, how many times did this occur, and how many timer intervals did these 
+    other processes run? (3 points)</li>
+  <li>Did a thread finish executing before the end of a timer interval? If so, 
+    how many times did this happen and what did the operating system schedule 
+    for the rest of that timer interval? Was it one of the other timestamp threads, 
+    or another process? (3 points)</li>
+  <li> 
+    <ol type="a">
+      <li>How many timer intervals elapse from the time your program started to 
+        the time your program ended? (1 point)</li>
+      <li>How many of those intervals did your program not run? (1 point)</li>
+    </ol>
+  </li>
+  <li>Expressed as a hyphen delimited string of the label numbers, what was the 
+    execution order of the threads? (For example, from the data in the screen 
+    shots above, the execution order was 0-1-2-3-0-1-2-3-0-1-2-3-0-1-3) (2 points)</li>
+</ol>
+
+
+<h2>Part II: Thread Programming</h2>
+
+<h3>Getting started</h3>
+
+<p>You can get the code you need for this part of the lab <a href="Exercise6/handout/threadedclient.zip">here</a>.  This archive contains the
+following files:</p>
+
+<dl>
+  <dt>RemoteServer.lib</dt>
+    <dd>The remote server library</dd>
+  <dt>tclient.exe</dt>
+    <dd>Your threaded client.  Initially, this is identical to sclient.exe.
+	</dd>
+  <dt>sclient.exe</dt>
+    <dd>The sequential client;  just a compilation of the original
+        code.  You will be comparing the performance of your threaded
+	tclient.exe to this naive sequential solution.</dd>
+  <dt>servers.h</dt>
+    <dd>Public interface to the remote server library</dd>
+  <dt>ThreadedClient.cpp</dt>
+    <dd>The source file for the threaded client.  You will be
+        modifying this file and handing it in.</dd>
+  <dt>ThreadedClient.dsw</dt>
+    <dd>The Visual C++ workspace for this project</dd>
+  <dt>ThreadedClient.dsp</dt>
+    <dd>The Visual C++ project file for this project</dd>
+  <dt>ThreadedClient.ncb</dt>
+    <dd>Visual C++ support file</dd>
+  <dt>ThreadedClient.opt</dt>
+    <dd>Visual C++ support file</dd>
+</dl>
+
+<h3>Your Task</h3>
+
+<p>In this part of the lab, you're going to use threads to parallelize the
+operation of a very simple database client.  This program has a very simple
+task:  you provide it an account number, and it prints out the personal
+and account information of the client corresponding to that number.</p>
+
+<p>The business for which you're writing this application has decided to
+split the account information into two separate databases: one to
+manage client's personal information (which is bulky, but mostly
+constant), and one to manage the client's account information (which
+is smaller, but changes a lot).  The job of the program is to contact
+each database, access the information, and print it to the user.</p>
+
+<p>Unfortunately, the databases are slow, and your connection to them
+isn't good.  It can, therefore, take awhile to contact each database,
+so in order to make the program respond as quickly as possible, you
+have decided to use threaded programming, so that separate threads
+can contact the databases in parallel.</p>
+
+<p>Your program should work as follows:</p>
+
+<ol><li>The main thread retrieves the account number from the command
+	line.</li>
+    <li>The main thread creates two threads to access the
+        databases and gives them the account number requested.</li>
+    <li>The database threads contact the databases and get the
+	results.  When they have the results, they pass them to
+	the main thread and terminate.</li>
+    <li>The main thread waits for the database threads to terminate,
+	then prints out the results and terminates.</li>
+</ol>
+
+<p>When compiling this program, you may occasionally receive a linker warning 
+  about conflicts with LIBC. You may safely ignore this warning.</p>
+
+<h3>Details</h3>
+
+<p>An existing codebase exists which contacts each database
+sequentially and retrieves information from them.  You should modify
+this program to use threads, but otherwise leave it alone -- the
+output should be in the same style, etc.</p>
+
+<p>The code for contacting the databases is already written for you, in
+the two functions <code>GetPersonalInformation()</code> and
+<code>GetAccountInformation()</code>.  These functions simulate contacting
+a real database server over a slow network connection.  Your worker
+threads should simply call these functions.</p>
+
+<p>To create a thread, use the <code>_beginthread()</code> Windows API
+call:</p>
+
+<p><code>unsigned long _beginthread( void (*startpoint)( void * ), unsigned int stacksize, void *arguments )</code></p>
+
+<p>The first argument is a pointer to the function that Windows will call at the 
+  beginning of the thread; when this function returns, the thread will terminate. 
+  This function takes a <code>void *</code> as an argument, and "returns" <code>void</code>; 
+  be sure to specify that it uses __cdecl calling conventions (see example). The 
+  stack size you should provide is 0; Windows interprets this as a special case 
+  meaning "inherit the stack size from the parent thread", which is fine for our 
+  purposes. The third argument is the argument that will be provided to the thread's 
+  main function. For example, if you declare:</p>
+
+<code><pre>
+ /* our thread's starting function; be sure to explicitly
+    use __cdecl calling conventions */
+ void __cdecl threadfunc( void *args ) {
+    int *n = (int *) args;
+    cout << "Received %d\n" << *n << endl;
+}
+
+int main( int argc, char **argv ) {
+    HANDLE thread;
+    int n = 7;
+    thread = (HANDLE) _beginthread( threadfunc, 0, &n );
+    if (thread == (HANDLE) -1L) {
+	cerr << "Couldn't create thread!" << endl;
+	exit(1);
+    }else {
+ 	WaitForSingleObject( thread, INFINITE );
+	cout << "Done!" << endl;
+	exit(0);
+    }
+}
+</pre></code>
+
+<p><code>_beginthread</code> is prototyped to return an unsigned long.
+In fact, this unsigned long is equivalent to a <b>handle</b>, which is
+a Windows-specific abstraction.  A handle represents some sort of
+operating-system object, like synchronization primitives and opened
+files; in this case, it's a <b>thread handle</b>.  We can do all sorts
+of interesting things to threads using a thread handle, but here we
+just want to wait for the thread to end; we can achieve that using the
+<code>WaitForSingleObject</code> call.  In the project, you'll want to
+wait for any of several handles; this is done using the
+<code>WaitForMultipleObjects</code> call:</p>
+
+<p><code>DWORD WaitForMultipleObjects( DWORD count, CONST HANDLE *handles, BOOL wait_all, DWORD timeout )</code></p>
+
+<p><code>handles</code> points to an array of handles that you're
+interested in; the number of elements in the array must be (at least)
+<code>count</code>.  If <code>wait_all</code> is <code>TRUE</code>,
+then <code>WaitForMultipleObjects</code> will wait for all of the
+handles to become signalled -- if they're thread handles, for all the
+threads to terminate.  <code>timeout</code> specifies how long to
+wait, in milliseconds; the special value <code>INFINITE</code> means
+to wait for all the handles, no matter how long it takes.</p>
+
+<p>You should always check your calls for completion.  In particular,
+<code> _beginthread()</code> can return -1L to signal that it failed to
+create a thread.  If you make any assumptions in your code, be sure
+to state them clearly.</p>
+
+<p>Good luck!</p>
+
+<h3>Evaluation</h3>
+
+<p>You will be graded on this part of the assignment as follows:</p>
+
+<ul><li>6 points for successfully and safely creating the threads.</li>
+    <li>6 points for successfully waiting for those threads to complete.</li>
+    <li>6 points for successfully passing information between the
+        threads.</li>
+    <li>6 points for style and documentation.</li></ul>
+
+</table>
+<td width=5><br>
+</td>
+</body></html>
+
+ 
+ 
+
