@@ -1,0 +1,34 @@
+         Func          Func+Child           Hit
+        Time   %         Time      %      Count  Function
+---------------------------------------------------------
+   24222.677  65.4    24222.677  65.4     9998 countpairs(char *,char *) (words.obj)
+   12217.216  33.0    12217.216  33.0     9998 pick_nth(char *,char *,int) (words.obj)
+     380.951   1.0    36820.844  99.4        1 generate(int,char *,char *) (words.obj)
+     133.249   0.4      133.249   0.4     8254 getword(char *) (words.obj)
+      67.732   0.2       67.732   0.2     8253 string_to_heap(char *) (words.obj)
+       1.952   0.0    37019.650 100.0        1 _main (words.obj)
+       1.004   0.0        1.004   0.0        1 opentext(char *) (words.obj)
+       0.000   0.0      195.850   0.5        1 readwords(void) (words.obj)
+
+
+
+
+
+
+
+  Func          Func+Child           Hit
+        Time   %         Time      %      Count  Function
+---------------------------------------------------------
+    7471.087  53.7     7471.087  53.7     9998 countpairs(char *,char *) (words.obj)
+    3752.341  27.0     3752.341  27.0     9998 pick_nth(char *,char *,int) (words.obj)
+    2268.408  16.3     2268.408  16.3     8253 string_to_heap(char *) (words.obj)
+     272.704   2.0    11496.132  82.7        1 generate(int,char *,char *) (words.obj)
+     137.970   1.0      137.970   1.0     8254 getword(char *) (words.obj)
+       1.936   0.0    13902.930 100.0        1 _main (words.obj)
+       0.961   0.0        0.961   0.0        1 opentext(char *) (words.obj)
+       0.000   0.0     2403.901  17.3        1 readwords(void) (words.obj)
+
+
+
+
+

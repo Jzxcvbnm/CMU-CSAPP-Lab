@@ -1,0 +1,114 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" dir="ltr" xml:lang="zh-cn" lang="zh-cn"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+
+
+
+    <meta name="keywords" content=“Program Performance Lab ">
+    <title>Program Performance Lab</title>
+</head>
+
+<body class="mod-assignment course-49 editing dir-ltr lang-zh_cn_utf8" id="mod-assignment-view">
+
+<div id="page">
+  <p></p><h1>Program Performance lab</h1>
+  <div id="content"><div id="intro" class="box generalbox generalboxcontent boxaligncenter">
+<h1>Practice 1: Optimizing Analysis</h1>
+<p>Analysis the <a href="./practice1/">Trigram program</a>. </p>
+ <h1>Practice 2: Optimize Program Performance</h1>
+ <p>In
+ this exercise, you will modify an existing program to make it run 
+faster. The program is not written for speed. You will find many things 
+to optimize, but you should concentrate on optimizations that will make a
+ significant impact on run time.</p><p>The <a href="./practice2/substitute.cpp">program</a> is all in one file called <code>substitute.cpp</code>.
+ The purpose of the program is to perform string substitutions on a list
+ of files. The program input is specified on the command line, for 
+example:</p><blockquote><pre>substitute.exe replacements.txt file1.txt file2.txt ... fileN.txt</pre></blockquote><p>The first file, <font face="Courier New, Courier, mono">replacements.txt</font>
+ in this example, contains a list of substitutions to perform. Each line
+ of this file specifies a substitution by giving a string to search for 
+and a string to replace it by. The strings are in double quotes. The 
+following is an example substitution file:</p><blockquote><pre>"the" "that" "his" "her"</pre></blockquote><p>If
+ you need to include a backslash (\) or quote (") in either string, you 
+must escape the character by preceding it with a backslash. For example,
+ to replace double quotes by backslashes, you would write the line:</p><blockquote><pre>"\"" "\\"</pre></blockquote><p>The
+ remaining files on the command line are the files to be modified. The 
+program reads each file, performs the substitutions one line at a time, 
+and then writes the file. To perform a substitution, the program looks 
+for an exact match to the first string within the file. The matching 
+characters are replaced by the second string. Then the file is searched 
+for another match to the first string. This match is performed on the 
+new state of the file, so it may include characters from any previous 
+substitution. In fact, if the replacement string contains the search 
+string, the program will go into an infinite loop. When no more matches 
+are found, the program moves on to the next line in the substitution 
+file.</p><p>A good programming style would be to avoid reading in a 
+whole file at a time because the files might be very large. For this 
+exercise, however, you can assume that there is always enough memory to 
+read the whole file.</p><h3>Compiling substitute.cpp</h3><p>Create a new
+ project as a Win32 Console Application. Add substitute.cpp to the 
+project. Before you compile it, you should go to the <b>Project Settings</b> dialog and, under <b>General, Microsoft Foundation Classes:</b>, select <b>Use MFC in a Shared DLL</b>. This is necessary because this program uses several MFC classes, including CString and CFile.</p><h3>Running substitute.exe</h3><p>Before running substitute.exe, you need some data to run it on. Download <a href="./practice2/data.zip">this data</a>,
+ create a folder for it, and extract the files from the .zip archive. 
+Since the program will modify some of these files, you will want to 
+either save the .zip archive or save a copy of the files. (You will be 
+running the program many times on this test data.)</p><p>To run 
+substitute.exe, you can move it to a directory of your choice, create an
+ MS-DOS command prompt window, and type in the program and command line.
+ This gets tiring, so I recommend the following alternative: In the 
+Project Settings dialog box, select the Debug tab, and set the Program 
+argument fields to contain the command line arguments:</p><blockquote><pre>replace.txt call.cpp semantics.cpp math.cpp mach.cpp compiler.cpp</pre></blockquote><p>If you leave the Working directory blank, it will default to the program location, which will be something like C:\<i>...your_path...</i>\substitute\Debug. So before you run the program, copy the test files from wherever you put them to C:\<i>...your_path...</i>\substitute\Debug. Be sure to set up the <b>Program arguments</b> fields and put your test files in C:\<i>...your_path...</i>\substitute\Release when you test your optimized program using the <b>Release configuration</b>.</p><p>Note: I had trouble making the <b>Working directory</b> field work when debugging the Release configuration, so be careful if you deviate from these setup recommendations.</p><h3>Profiling substitute.exe</h3><p>Once
+ everything is running (check the test files to see that the 
+substitutions were applied), you are ready to start optimizing. The 
+first step will be to use the profiler to find out where the program is 
+spending its time and what it is doing with that time.</p><p>A few words
+ of warning: When you use profiling, you will see a console window 
+appear, but the standard output (cout) is redirected to the window where
+ you see compiler output. To see your program output, you select the 
+Profile tab. This is normally selected automatically, and this is also 
+where you will see profiler output. You should normally not have any 
+problems. The danger is that <i>if the program prints a single line 
+warning message, it is easy to miss since it will be followed by many 
+lines of profiling data.</i></p><p>An important way to make programs go faster is to turn on the optimizing compiler. Normally you do this by using <b>Set Active Configuration ...</b>
+ under the Build menu to change from the Debug configuration to the 
+Release configuration. Release is already set up to optimize your 
+program. However, you will probably need to (once again) go to the <b>Project Settings</b> dialog and, under <b>General, Microsoft Foundation Classes:</b>, select <b>Use MFC in a Shared DLL</b> to apply this setting to the <b>Release configuration</b>. In addition, <i>to run the profiler on the <b>Release</b></i><b> configuration</b>, you need to:</p><ul><li>Open the <b>Project Settings</b> dialog box. </li><li>Make sure your project and configuration (substitute, Win32 Release) are selected. </li><li>Select the <b>Link</b> tab. </li><li>Enable <b>Generate debug info</b> and <b>Enable profiling</b>. </li></ul><p>If you are using NT 4.0 operating system, the <b>Profile...</b> option under the <b>Build</b> drop-down listbox may be grayed out. Microsoft provides a work-around in their <a href="http://support.microsoft.com/" target="externalWindow">support website</a>. Search for Article ID <i>Q224382</i>.</p><h3>Your Assignment</h3><p>You should make a new version of <code>substitute.exe</code>
+ and demonstrate, using profiling output, that it runs faster. You 
+should be able to obtain at least a factor of 2 speedup (old run time 
+divided by new run time). You do not have to use Microsoft Foundation 
+Class objects, but given that these are well written and probably 
+correct, you should only replace code that is doing unnecessary work as 
+reflected in profiler measurements.</p><p>Submit two files:</p><ol><li>Your modified substitute.cpp </li><li>A file that contains<br>
+    <ol><li>a clear but concise description of what you observed before 
+optimization. It should be substantiated by an empirical evidence of the
+ profiler output. </li><li>the bottlenecks you noticed </li><li>the actions you took to address the bottlenecks, and the improvements you observed (again substantiated by empirical evidence) </li><li>reasons for why you did NOT attempt to optimize any more than you did. </li></ol></li></ol><p>To
+ verify the correctness of your solution, compare the output files 
+produced before making any source code changes with the output files 
+produced after making source code changes. Since your optimization 
+should not change the external behavior of the program, the 
+corresponding output files should be identical. If the output files 
+differ, your solution is incorrect. You can use the "comp" command in 
+windows to check if the contents of two files differ.</p><h3>Final Word</h3><p>This
+ project is for educational value only. However, you might be intrigued 
+by the power of a string replacement engine like substitute.exe. Often, 
+in software engineering and even web page maintenance, you will need to 
+perform global replacement of variables, classes, and even misspellings.
+ This is so common in large projects that there are many special tools 
+to facilitate this job. Unix tools such as Find and SED and languages 
+such as Awk and Perl make this kind of job simple. In fact, a SED script
+ to replace strings in a file is not much more complicated than the 
+"replace.txt" file read in by this project. With most tools, you can 
+match patterns, allowing you do more powerful things such as 
+substituting only when the search string is followed by any 
+non-alphanumeric—that is, when the search string is not a prefix of some
+ other identifier.</p><p>Few programmers are experts at all of these 
+tools. Novices tend to ignore them and do things the hard way. 
+Experienced programmers know they can learn to use another programming 
+language, they teach themselves what they need to know on an as-needed 
+basis, and they get the job done quickly.</p> <p></p>
+  </div>
+  </div>
+</div>
+
+
+</body>
+
+</html>
