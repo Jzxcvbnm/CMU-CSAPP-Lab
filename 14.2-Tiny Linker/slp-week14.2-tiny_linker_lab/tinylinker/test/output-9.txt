@@ -1,0 +1,10 @@
+Symbol Table
+X31=5
+
+Memory Map
+0:  2009
+1:  2005 Error: R type address on use chain; treated as E type.
+2:  2005
+3:  2005 Error: A type address on use chain; treated as E type.
+4:  2005 Error: I type address on use chain; treated as E type.
+5:  3005

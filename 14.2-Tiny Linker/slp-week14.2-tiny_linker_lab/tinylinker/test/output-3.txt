@@ -1,0 +1,52 @@
+Symbol Table
+X11=6
+X12=8
+X13=9
+X21=10
+X22=12
+X23=15
+X31=20
+X61=32
+
+Memory Map
+0:  1000
+1:  1020
+2:  1012
+3:  1020
+4:  1012
+5:  1012
+6:  1006
+7:  1007
+8:  1008
+9:  1009
+10: 2009
+11: 2006
+12: 2012
+13: 2006
+14: 2009
+15: 2015
+16: 2009
+17: 2020
+18: 3000
+19: 3701
+20: 3002
+21: 4021
+22: 4020
+23: 4006
+24: 4024
+25: 4025
+26: 4012
+27: 5027
+28: 5987
+29: 5029
+30: 6030
+31: 6020
+32: 6002
+33: 6003
+34: 6034
+35: 6005
+
+Warning: X12 was defined in module 1 but never used.
+Warning: X21 was defined in module 2 but never used.
+Warning: X23 was defined in module 2 but never used.
+Warning: X61 was defined in module 6 but never used.

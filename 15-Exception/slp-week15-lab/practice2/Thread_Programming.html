@@ -1,0 +1,173 @@
+<html>
+<head>
+<title>Thread Programming</title>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=utf-8">
+</head><body onLoad="">
+<p>&nbsp;</p>
+<table><tr>
+<td width=5><br></td>  <td valign=top class=td0_x align=left > <head><title></title>
+<h2>Thread Programming</h2>
+
+<h3>Getting started</h3>
+
+<p>You can get the code you need for this part of the lab <a href="handout/threadedclient.zip">here</a>.  This archive contains the
+following files:</p>
+
+<dl>
+  <dt>RemoteServer.lib</dt>
+    <dd>The remote server library</dd>
+  <dt>tclient.exe</dt>
+    <dd>Your threaded client.  Initially, this is identical to sclient.exe.
+	</dd>
+  <dt>sclient.exe</dt>
+    <dd>The sequential client;  just a compilation of the original
+        code.  You will be comparing the performance of your threaded
+	tclient.exe to this naive sequential solution.</dd>
+  <dt>servers.h</dt>
+    <dd>Public interface to the remote server library</dd>
+  <dt>ThreadedClient.cpp</dt>
+    <dd>The source file for the threaded client.  You will be
+        modifying this file and handing it in.</dd>
+  <dt>ThreadedClient.dsw</dt>
+    <dd>The Visual C++ workspace for this project</dd>
+  <dt>ThreadedClient.dsp</dt>
+    <dd>The Visual C++ project file for this project</dd>
+  <dt>ThreadedClient.ncb</dt>
+    <dd>Visual C++ support file</dd>
+  <dt>ThreadedClient.opt</dt>
+    <dd>Visual C++ support file</dd>
+</dl>
+
+<h3>Your Task</h3>
+
+<p>In this part of the lab, you're going to use threads to parallelize the
+operation of a very simple database client.  This program has a very simple
+task:  you provide it an account number, and it prints out the personal
+and account information of the client corresponding to that number.</p>
+
+<p>The business for which you're writing this application has decided to
+split the account information into two separate databases: one to
+manage client's personal information (which is bulky, but mostly
+constant), and one to manage the client's account information (which
+is smaller, but changes a lot).  The job of the program is to contact
+each database, access the information, and print it to the user.</p>
+
+<p>Unfortunately, the databases are slow, and your connection to them
+isn't good.  It can, therefore, take awhile to contact each database,
+so in order to make the program respond as quickly as possible, you
+have decided to use threaded programming, so that separate threads
+can contact the databases in parallel.</p>
+
+<p>Your program should work as follows:</p>
+
+<ol><li>The main thread retrieves the account number from the command
+	line.</li>
+    <li>The main thread creates two threads to access the
+        databases and gives them the account number requested.</li>
+    <li>The database threads contact the databases and get the
+	results.  When they have the results, they pass them to
+	the main thread and terminate.</li>
+    <li>The main thread waits for the database threads to terminate,
+	then prints out the results and terminates.</li>
+</ol>
+
+<p>When compiling this program, you may occasionally receive a linker warning 
+  about conflicts with LIBC. You may safely ignore this warning.</p>
+
+<h3>Details</h3>
+
+<p>An existing codebase exists which contacts each database
+sequentially and retrieves information from them.  You should modify
+this program to use threads, but otherwise leave it alone -- the
+output should be in the same style, etc.</p>
+
+<p>The code for contacting the databases is already written for you, in
+the two functions <code>GetPersonalInformation()</code> and
+<code>GetAccountInformation()</code>.  These functions simulate contacting
+a real database server over a slow network connection.  Your worker
+threads should simply call these functions.</p>
+
+<p>To create a thread, use the <code>_beginthread()</code> Windows API
+call:</p>
+
+<p><code>unsigned long _beginthread( void (*startpoint)( void * ), unsigned int stacksize, void *arguments )</code></p>
+
+<p>The first argument is a pointer to the function that Windows will call at the 
+  beginning of the thread; when this function returns, the thread will terminate. 
+  This function takes a <code>void *</code> as an argument, and "returns" <code>void</code>; 
+  be sure to specify that it uses __cdecl calling conventions (see example). The 
+  stack size you should provide is 0; Windows interprets this as a special case 
+  meaning "inherit the stack size from the parent thread", which is fine for our 
+  purposes. The third argument is the argument that will be provided to the thread's 
+  main function. For example, if you declare:</p>
+
+<code><pre>
+ /* our thread's starting function; be sure to explicitly
+    use __cdecl calling conventions */
+ void __cdecl threadfunc( void *args ) {
+    int *n = (int *) args;
+    cout << "Received %d\n" << *n << endl;
+}
+
+int main( int argc, char **argv ) {
+    HANDLE thread;
+    int n = 7;
+    thread = (HANDLE) _beginthread( threadfunc, 0, &n );
+    if (thread == (HANDLE) -1L) {
+	cerr << "Couldn't create thread!" << endl;
+	exit(1);
+    }else {
+ 	WaitForSingleObject( thread, INFINITE );
+	cout << "Done!" << endl;
+	exit(0);
+    }
+}
+</pre></code>
+
+<p><code>_beginthread</code> is prototyped to return an unsigned long.
+In fact, this unsigned long is equivalent to a <b>handle</b>, which is
+a Windows-specific abstraction.  A handle represents some sort of
+operating-system object, like synchronization primitives and opened
+files; in this case, it's a <b>thread handle</b>.  We can do all sorts
+of interesting things to threads using a thread handle, but here we
+just want to wait for the thread to end; we can achieve that using the
+<code>WaitForSingleObject</code> call.  In the project, you'll want to
+wait for any of several handles; this is done using the
+<code>WaitForMultipleObjects</code> call:</p>
+
+<p><code>DWORD WaitForMultipleObjects( DWORD count, CONST HANDLE *handles, BOOL wait_all, DWORD timeout )</code></p>
+
+<p><code>handles</code> points to an array of handles that you're
+interested in; the number of elements in the array must be (at least)
+<code>count</code>.  If <code>wait_all</code> is <code>TRUE</code>,
+then <code>WaitForMultipleObjects</code> will wait for all of the
+handles to become signalled -- if they're thread handles, for all the
+threads to terminate.  <code>timeout</code> specifies how long to
+wait, in milliseconds; the special value <code>INFINITE</code> means
+to wait for all the handles, no matter how long it takes.</p>
+
+<p>You should always check your calls for completion.  In particular,
+<code> _beginthread()</code> can return -1L to signal that it failed to
+create a thread.  If you make any assumptions in your code, be sure
+to state them clearly.</p>
+
+<p>Good luck!</p>
+
+<h3>Evaluation</h3>
+
+<p>You will be graded on this part of the assignment as follows:</p>
+
+<ul><li>6 points for successfully and safely creating the threads.</li>
+    <li>6 points for successfully waiting for those threads to complete.</li>
+    <li>6 points for successfully passing information between the
+        threads.</li>
+    <li>6 points for style and documentation.</li></ul>
+
+</table>
+<td width=5><br>
+</td>
+</body></html>
+
+ 
+ 
+

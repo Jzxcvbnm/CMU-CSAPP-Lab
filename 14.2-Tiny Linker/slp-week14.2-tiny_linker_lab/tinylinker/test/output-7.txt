@@ -1,0 +1,12 @@
+Symbol Table
+X21=3
+X31=4
+
+Memory Map
+0:  1003 Error: Pointer in use chain exceeds module size; chain terminated.
+1:  1777 Error: E type address not on use chain; treated as I type.
+2:  1003
+3:  2456
+4:  3004
+
+Warning: X31 was defined in module 3 but never used.

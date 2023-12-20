@@ -1,0 +1,400 @@
+<html><head><title>Notes</title><link rel="stylesheet" href="/content/css/ssdcourses-v1.0.css" type="text/css"/></head>
+<body>
+<h3>Introduction</h3>
+
+<p>There's a lot that has to happen when a computer is first turned on.
+The physical configuration of the computer has to be determined.
+Devices need to be checked to make sure they're working properly.
+All of the onboard hardware needs to be enabled and initialized.  The
+hard drives have to be spun up and examined.  The initial program has
+to be loaded into memory from the boot device.  The processor has to
+configured and initialized -- oh, and on an IBM-compatible PC the
+BIOS initializes the RS bits of Status Register A on the MC146818 RTC
+to read 0110.</p>
+
+<p>The MC146818 RTC -- that is, the Real Time Clock chip by Motorola,
+first included in the IBM AT computer and ever since a standard part
+of Intel-based systems -- is a reasonably simple example of the gritty
+details of our computers that we users rarely have to worry about.
+The RTC chip has two chief functions.  The first is to generate
+periodic interrupts, if it's instructed to do so; this is useful for
+many reasons, some of which we'll get to later.  The second function
+is maintaining the system clock.  The chip stores the time in what's
+known as BCD format; that is, a single byte is divided into two 4-bit
+segments, each of which holds a decimal digit: so, for example, 58
+(decimal) would be encoded as 01011000 (that is, 0x58).  This is
+inefficient with space, but can easily be converted to a
+human-readable form.  Also, the original MC146818 only stored two
+digits (one byte) for the year, which I seem to remember being
+relevant as the year 1999 came to its end.  Newer chipsets use two
+bytes.  Now, while you may or may not find all that interesting,
+there's a more important point here: the people in this world who have
+used a computer with a MC146818-compatible chipset vastly outnumber
+the people who know that they have used a computer with a
+MC146818-compatible chipset.</p>
+
+<h3>Towards modern operating systems</h3>
+
+<p>Consider a closed box on a table.  On the side of the box is a clock,
+which keeps perfect time, and a small dial, which can be used to set
+the hands on the clock.  As long as the clock is ticking properly, the
+inner workings could be anything: it could run on batteries, or a
+pendulum, or lab rats, for that matter.  This is the principle of
+abstraction at work: an interface between two objects should be as
+general as is possible, while allowing both objects to achieve what
+they require.  A well-designed abstraction can be easily and
+completely applied anywhere where it can conceivably fit.  A
+poorly-designed abstraction is bulky, or worse, impedes function.  The
+whole point of abstraction is to make complicated things easier to
+use.</p>
+
+<p>Operating systems are just abstractions between the hardware of a
+computer and the software running on that hardware.  Now, let's build
+up what we mean by that.</p>
+
+<p>A running process uses memory primarily in three ways.  The first
+is its program code, which is loaded into memory just like any other
+data.  The second is its global data, called the heap;  this is
+where memory allocated by C's malloc() and C++ new() functions is
+found.  The third is the stack, which holds local variables and
+the "stack trace" -- the nest of what functions are currently being
+executed by what functions.</p>
+
+<p>A software program is just a set of instructions to be executed on a
+processor.  The processor runs through these machine instructions,
+one by one (actually, modern processors are considerably more complex
+then this, but they still present the abstraction of running through
+the instructions one by one).  These instructions generally fall into
+one of three categories:</p>
+<ol><li>Computation.  Most processors operate on both integer types
+        (short, int, long int, etc.) and floating-point types
+	(float, double).  These instructions range from additions
+	and comparisons to more esoteric calculations like the Pentium
+	MMX's RCPPS instruction, which takes the reciprocals of the four
+	packed source operands, and REPNE CMPSB, which is basically the
+	C strncmp() implemented in hardware.</li>
+    <li>Flow control.  The processor checks to see if certain
+        conditions are met, and if so, resumes executing instructions
+	at the target address.  Processors usually also have instructions
+	specifically meant for calling other functions (which preserve the
+	calling address) and the operating system (usually by creating
+	a trap of some sort;  more on this later).</li>
+    <li>Input/output.  Processors can usually operate directly on memory,
+        but it's considerably more efficient to work in a special
+	in-processor memory area called the registers, and so most
+	programs keep as much data as they can in registers.
+	Input/output instructions copy data between the registers,
+	main memory, and special I/O addresses which hardware
+	devices listen to.</li></ol>
+
+<p>In addition, processors have a small set of control instructions which
+allow software to configure the processor.</p>
+
+<p>To the processor, a program is just a set of these instructions.  The
+organization of programs into functions and classes happens
+independently of the processor [footnote: at least, for standard
+processors; there are chips made to model the behavior of the Java
+Virtual Machine, and these do have to know something of the nature of
+functions and classes].  When a function calls a function, it stores
+the current instruction pointer (that is, the address of the next
+instruction to be executed) on the stack and jumps to the address of
+the function.  When the function is ready to return, it pops the
+stored address off the stack and jumps to it.</p>
+
+<p>The processor communicates with the hardware by way of a wire called
+the <b>system bus</b>;  the various components of a computer send out
+signals on the bus, and the targets of the signals listen and respond.
+There are two possible ways for software to find out that something
+is happening with a hardware device.  First, the software could constantly
+poll all the devices it's interested in;  it sends a signal to the
+keyboard, say, and the keyboard responds with whether there have been any
+keystrokes recently.  The problem is that all of those signals would
+completely tie up the bandwidth of the system bus -- and for nothing,
+since devices rarely have anything important to report.  What would
+be nice is a way for the hardware to tell the software that something
+interesting is happening.</p>
+
+<p>Fortunately, this is possible.  When a piece of hardware has something
+to report, it sends the processor a signal called an <b>interrupt</b>
+or a <b>hardware trap</b>.  The processor checks whether it's currently
+accepting interrupts from that device, and if so, it saves where it was
+in the program and jumps to an address in memory called an interrupt handler.
+The handler does its business and returns;  the processor then picks up
+again with the program.  In a primitive model, if a program wants to
+receive a certain type of event, it just installs its own handler for that
+interrupt -- and in fact, under MS-DOS, this is exactly what many programs
+do.</p>
+
+<p>There a lot of problems with that primitive model, though.  First and
+foremost, it's tricky business -- the programmer has to be familiar
+with the hardware in question, enough so to be able to interpret all
+of its signals and know what sort of responses it expects.  If it
+could be one of several different devices, the programmer has to able
+to communicate with any of them, and this functionality has to be
+duplicated across every program which wants to use that device.  As an
+example, on an IBM machine, the first parallel printer port signals on
+IRQ 7 (that is, it requests a processor interrupt of type 7).
+Printers are standardized, but only enough to print plain unformatted
+text without special instruction; special formatting, like graphical
+fonts, require commands that vary from printer to printer.  DOS word
+processors like WordPerfect were distributed on dozens of disks, a
+large proportion of which were printer drivers.  One of the
+innovations of Windows (at least, innovative in the PC world) was
+having a universal printing API so that users only needed a single
+Windows printer driver, rather than needing a special driver for each
+application.</p>
+
+<p>There's another problem with programs having this sort of low-level
+access to the hardware.  With a printer, a faulty program can hardly
+do worse than sending absolute garbage to the printer, but with a
+filesystem, a broken program can potentially destroy all of the data
+on the disk.  It would be nice to have some sort of protection against
+misbehaving programs.</p>
+
+<p>A third problem touches on a new topic: this sort of low-level access
+doesn't work with multiple programs running at once.  Only one program
+can have its interrupt handler installed at once; one handler can
+certainly call the other, but there's no way of making sure that they
+aren't counteracting each other, or even overwriting each other's
+data.  In fact, there are all sorts of issues involved in having multiple
+programs running at once:  ideally, each should be independent of the
+other as much as it desires to be.  No program should be able to monopolize
+the hardware;  no program should be able to overwrite the data in the
+others;  no program should be able to take down the computer.</p>
+
+<h3>Multitasking operating systems</h3>
+
+<p>An operating system is called <b>multitasking</b> if it allows
+multiple threads of execution to overlap in their execution: that is,
+if it is capable of maintaining the illusion to the user that several
+threads of execution are being run at the same time, even if there is
+only one processor installed in the system.</p>
+
+<p>Let's go over some terminology for a second.  A <b>program</b> is a
+set of instructions to run on a processor.  A <b>process</b> is a
+collection of threads of execution running a single program, and the
+data shared between those threads.  A <b>thread of execution</b> is a
+processor context.</p>
+
+<p>A processor context includes everything that is necessary for a
+program to run.  For instance, each processor context has its own
+execution history and local data (stack), its own registers, and its
+own instruction pointer.  It may have its own thread-local data, but
+more likely it just shares the same global data space (heap) as the
+rest of the process.  The program code, and certain types of data, are
+read-only and thus can shared among multiple processes running the
+same program.  All running processes have at least one thread.</p>
+
+<p>So, for example, in Windows a user may have multiple Notepads open.
+Each Notepad is its own process, and probably keeps the document
+text on the heap.  Notepad is a simple enough program that it may
+only use one thread, but a more complicated version might use
+multiple threads -- for example, if it were saving a document,
+it might spawn a thread to do that while leaving another to run
+the user interface.  That thread would run in its own context, with
+its own stack, until it finished its task.</p>
+
+<p>In a modern operating system, different threads in a process are
+protected from each other, just as different processes are protected
+from each other.  This is accomplished by virtual memory, and there
+are several different types of it -- but for here, suffice it to say
+that when a processor in virtual-memory mode accesses a certain address,
+it's not directly addressing physical memory.  Instead, the processor
+converts this virtual address into a physical address using special
+tables in memory, and each thread has its own copies of parts of these
+tables.  Thus, one thread's stack isn't even addressable by another
+thread -- those addresses refer to its own stack.</p>
+
+<p>Threads can't change these tables on their own -- if they could, that
+would effectively break the entire protection scheme.  In order to
+make a change -- usually to allocate more memory -- they have to ask
+the operating system to do it for them.  The action of a user process
+making a procedure call to the operating system is called a <b>system
+call</b>, or <b>syscall</b>;  the exact method of making a system call
+depends on the underlying architecture and the operating system being
+considered, but the divide is common to all modern operating systems.</p>
+
+<p>The reason why threads can't modify the virtual-memory tables is
+simple: modern operating systems execute in a mode of the processor
+called <b>protected mode</b>.  The first Intel processor with a
+protected mode was the 80386, but the idea predates that considerably.
+In protected mode, the processor executes instructions at one of
+several different privilege levels.  At the lowest privilege level,
+called <b>user mode</b>, the hardware and configuration instructions
+are usually restricted, and attempting to execute one will result in a
+processor fault, which generates a special interrupt.  At the highest
+privilege level, called <b>supervisor mode</b> or <b>kernel mode</b>,
+no instructions are restricted; the part of the operating system which
+runs in supervisor mode -- that is, the part which handles syscalls
+and interrupts -- is known as the <b>kernel</b> of the operating
+system.</p>
+
+<p>The services provided by the kernel vary greatly from one operating
+system to the next.  There are widely-accepted specifications for
+operating systems called <b>POSIX</b>, and most operating systems have
+POSIX layers.  UNIX systems fully implement POSIX.  Windows versions
+descended from Windows NT (like Windows 2000 and XP, but not like
+Windows 95, 98, and ME) implement an early version of POSIX which
+existed when NT when first written, but there are significant
+compatibility problems.  Versions of MacOS prior to OS X are not at
+all POSIX; the MacOS X kernel is a variant of the BSD kernel, and as
+such is fully POSIX.  Whether or not an OS is POSIX-compliant impacts
+how easy it is to port applications to and from it; it is far more
+difficult to port an application from a UNIX computer to a Windows one
+than to port an application from one UNIX variant to another.</p>
+
+<p>A word of caution about system calls.  Switching from a user thread to
+the kernel imposes a fair amount of overhead.  There's a lot of thread
+state that has to be saved and restored on each kernel entry.  Worse,
+the kernel can't make assumptions about the arguments it's passed, so
+it has to ask questions like "Is this a valid string?", "Is this file
+actually open?", and "Does this pointer point to as much mapped memory
+as it claims to?".  It's not something that will make a huge
+difference on a small scale, but a thread which makes a lot of system
+calls may notice a significant performance penalty.  This isn't always
+a solvable problem;  just keep it in mind, and try to accomplish as much
+as possible on each call. </p>
+
+<p>Multitasking support is one of the more interesting parts of a kernel.
+In <b>cooperative multitasking</b>, threads must signal the operating
+system that they're willing to be switched out; MacOS versions prior
+to 10 cooperatively multitasked.  Most operating systems, including
+UNIX, Windows, and Mac OS X, use <b>preemptive multitasking</b>.
+Usually, the kernel arranges to have signals sent to it at a certain
+interval (in the Intel architecture, conceivably by the MC146818 --
+although the Pentium did add a more full-featured equivalent) and,
+whenever it gets such a signal ("pre-empting" the current thread),
+decides whether or not the active process should be changed and if
+so, what it should be changed to.  The simplest algorithm for making
+this decision is to always answer "yes" and then switch to whatever
+thread was last executed the furthest time ago -- in effect, cycling
+through all active threads.  Actual operating systems use more
+sophisticated algorithms, as do multi-processor systems.  Changing
+from one thread to another is called a <b>context switch</b>.</p>
+
+<p>There are several advantages to a multitasking system.  Theoretically,
+a multitasking system running several independent processor-intensive
+tasks will be slightly slower than a comparable system running the
+tasks one at a time, due to the overhead of the timer interrupts.  In
+reality, outside of scientific computing and CGI animation, very few
+tasks rely mostly on the processor.  Most user applications spend an
+overwhelming percentage of their time waiting for input.  Disk
+utilities wait for the disk.  Network utilities wait for the network.
+Multitasking operating systems can take advantage of these latencies
+to schedule other threads for execution, resulting in a superior
+performance overall.</p>
+
+<p>If you're interested, you can check what processes are currently
+running on your system.  There's an optional tool that comes with
+Windows 95, 98, and ME called System Information which has this
+information.  In Windows NT, 2000, and XP, the Task Manager has a
+process listing in one of its tabs.  The command 'ps -A' will work the
+same way on a UNIX box.</p>
+
+<p>Threads are a useful part of every programmer's toolbox, if for no
+other reason than that they allow a technique known as <b>event-driven
+programming</b>.  Imagine, if you will, a <tt>finger</tt> program.
+finger is a protocol, used mostly on UNIX servers, which allows users
+to remotely gain specific, public information about the server's
+users.  A finger utility opens a TCP/IP connection to the remote
+server, makes a query, and then reports back the response -- usually
+the user's name, office, and phone number.  Normally, a finger utility
+isn't the sort of thing you'd need to thread, but let's imagine you
+want to have a finger utility which can finger more than one address.
+In pseudocode, there's a simple nonthreaded solution:</p>
+
+<code><pre>
+    foreach address:
+        open connection
+        send query
+        get response
+        show response
+</pre></code>
+
+<p>However, this is inefficient.  It could be that the second server will
+respond much faster than the first, or that one of the addresses will
+time out -- but even if they all take about the same time, waiting for
+the servers to respond one at a time will take longer than waiting for
+all of them at the same time.  A threaded solution follows:</p>
+
+<code><pre>
+    foreach address:
+        create thread:
+            open connection
+            send query
+            get response
+            show response
+</pre></code>
+
+<p>Now the program will complete in as much time as it takes for the
+slowest server to respond, rather than as much time as it takes all
+the servers altogether.  However, there's an important problem.  If
+two servers take about the same time to respond, then their threads
+will get the responses at about the same time -- and then start
+displaying the results at the same time.  Now, the operating system
+can handle that, but the user will see something strange: the two
+responses, mingled it with each other!  You could argue that this
+wouldn't happen with a single processor, since one would be guaranteed
+to start showing the output before the other, but you would be wrong.
+If one thread is printing the results line by line, then it will make
+a system call to print out that line.  The system will start printing
+the line and block the thread until it's finished printing.  Now, the
+second thread can be scheduled and send a line to the output; it'll
+block, but that line will still be printed before the next line from
+the first thread.  You can see the problem.</p>
+
+<p>Worse, subtle concurrency problems can exist in software that will
+only rarely be triggered.  For instance, there's a subtle bug in the
+following C code (assume that <tt>thread1()</tt> and
+<tt>thread2()</tt> are, in fact, being run by two different threads).</p>
+
+<code><pre>
+    int i = 10;
+
+    void thread1() {
+        while (i) {
+            printf( "%d\n", i );
+            i--;
+        }
+    }
+
+    void thread2() {
+         i--;
+    }
+</pre></code>
+
+<p>There's a miniscule chance that <tt>thread1()</tt> will loop around
+instead of stopping at <tt>0</tt>.  If, sometime during the "final"
+iteration (the one where <tt>i</tt> started out <tt>1</tt>),
+<tt>thread1()</tt> is switched out for <tt>thread2()</tt>, and
+<tt>thread2()</tt> hasn't run at all yet, then <tt>i</tt> will be
+decremented twice to become <tt>-1</tt>, so that <tt>thread1()</tt>
+will have to run all the way through the integers before it finally
+ends.</p>
+
+<p>Fortunately, operating systems provide services to solve issues like
+these, which are as a whole called <b>concurrency problems</b>.</p>
+
+<p>[...]</p>
+
+<p>Threads are not the solution to every problem, but they can elegantly
+solve many timing issues.  If you ever find yourself polling some kind
+of state, waiting for it to change, you're better off spawning a
+thread to block until it changes -- this will significantly cut down
+on the number of system calls made, and will also allow other threads
+to run on the processor.</p>
+
+</body>
+
+
+
+
+
+
+
+
+
+
+
+
+

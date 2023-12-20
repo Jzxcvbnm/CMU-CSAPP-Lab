@@ -1,0 +1,11 @@
+Symbol Table
+X31=4
+
+Memory Map
+0:  1000 Error: X21 is not defined; zero used.
+1:  1000 Error: X21 is not defined; zero used.
+2:  1000 Error: X21 is not defined; zero used.
+3:  2456
+4:  3456
+
+Warning: X31 was defined in module 3 but never used.
